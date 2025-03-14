@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Recibos</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f9;
+            margin: 20px;
+            color: #333;
+        }
+        .formulario {
+            margin: 20px auto;
+            text-align: center;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+        }
+        .recibo {
+            width: 350px;
+            padding: 40px;
+            margin: 20px auto;
+            background-color: #fff;
+            border-radius: 10px;
+            border: 3px solid #cc3d3d;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            display: none;
+        }
+        .recibo h2, .recibo p {
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Formulario -->
+    <div class="formulario">
+        <img src="Horizontal_V1.png" alt="Logo" style="width: 200px; margin-bottom: 20px;">
+        <h2>Generar Recibo</h2>
+        <label for="nombre">Nombre completo del cliente:</label><br>
+        <input type="text" id="nombre" placeholder="Nombre del cliente" required><br><br>
+        <label for="total">Total a pagar:</label><br>
+        <input type="number" id="total" placeholder="Total a pagar" required><br><br>
+        <label for="abono">Abono:</label><br>
+        <input type="number" id="abonoInput" placeholder="Abono" required><br><br>
+        <label for="n_cuota">Número total de cuotas:</label><br>
+        <input type="number" id="n_cuota" placeholder="Número de cuotas" required><br><br>
+        <label for="cuota_pagar">Cuotas pagadas:</label><br>
+        <input type="number" id="cuota_pagar" placeholder="Cuotas pagadas" required><br><br>
+        <button type="button" onclick="generarRecibo()">Generar Recibo</button>
+    </div>
+
+    <!-- Recibo -->
+    <div class="recibo" id="recibo">
+        <img src="Horizontal_V1.png" alt="Logo" id="imagenRecibo" style="width: 250px;">
+        <p class="creciendo">COMPROBANTE DE PAGO</p>
+        <p><strong>Agencia:</strong> Zacatecoluca</p>
+        <p><strong>Fecha:</strong> <span id="fecha"></span></p>
+        <p><strong>Hora:</strong> <span id="hora"></span></p>
+        <p><strong>Nombre del Cliente:</strong> <span id="nombreCliente"></span></p>
+        <p><strong>Saldo Anterior:</strong> $<span id="saldoAnterior"></span></p>
+        <p><strong>Abono:</strong> $<span id="abono"></span></p>
+        <p><strong>Nuevo Saldo:</strong> $<span id="nuevoSaldo"></span></p>
+        <p><strong>Número total de cuotas:</strong> <span id="n_cuota_display"></span></p>
+        <p><strong>Cuotas pagadas:</strong> <span id="cuota_pagar_display"></span></p>
+        <hr>
+        <p class="contacto"><strong>Contacto:</strong> 6070-2186</p>
+        <p class="creciendo">CREDIEXPRESS</p>
+        <p class="creciendo">Creciendo contigo</p>
+    </div>
+
+    <!-- Bibliotecas para PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <script>
+        function generarRecibo() {
+            // Obtener valores
+            const nombre = document.getElementById('nombre').value.trim();
+            const total = parseFloat(document.getElementById('total').value);
+            const abono = parseFloat(document.getElementById('abonoInput').value);
+            const nCuota = document.getElementById('n_cuota').value;
+            const cuotaPagada = document.getElementById('cuota_pagar').value;
+            const nuevoSaldo = total - abono;
+
+            // Validar entrada
+            if (!nombre || isNaN(total) || isNaN(abono) || isNaN(nCuota) || isNaN(cuotaPagada)) {
+                alert("Por favor, complete todos los campos correctamente.");
+                return;
+            }
+
+            // Obtener fecha y hora actual
+            const ahora = new Date();
+            const fechaActual = ahora.toLocaleDateString('es-ES', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+            });
+
+            const horaActual = ahora.toLocaleTimeString('es-ES', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: true
+            });
+
+            // Actualizar contenido del recibo
+            document.getElementById('nombreCliente').textContent = nombre;
+            document.getElementById('saldoAnterior').textContent = total.toFixed(2);
+            document.getElementById('abono').textContent = abono.toFixed(2);
+            document.getElementById('nuevoSaldo').textContent = nuevoSaldo.toFixed(2);
+            document.getElementById('fecha').textContent = fechaActual;
+            document.getElementById('hora').textContent = horaActual;
+            document.getElementById('n_cuota_display').textContent = nCuota;
+            document.getElementById('cuota_pagar_display').textContent = cuotaPagada;
+
+            // Mostrar recibo
+            document.getElementById('recibo').style.display = 'block';
+
+            // Cargar imagen desde GitHub
+            const imagenRecibo = document.getElementById('imagenRecibo');
+            imagenRecibo.src = "https://raw.githubusercontent.com/CGDevSolutions/prueba01/main/Horizontal_V1.png";
+
+            // Generar PDF
+            imagenRecibo.onload = () => {
+                html2canvas(document.querySelector("#recibo"), {
+                    useCORS: true,
+                    scale: 2
+                }).then(canvas => {
+                    const imgData = canvas.toDataURL('image/png');
+                    const { jsPDF } = window.jspdf;
+                    const pdf = new jsPDF({
+                        orientation: 'portrait',
+                        unit: 'mm',
+                        format: [200, 300]
+                    });
+
+                    pdf.addImage(imgData, 'PNG', 10, 10, 180, 180);
+                    pdf.save(`Recibo_${nombre.replace(/ /g, "_")}_${fechaActual.replace(/\//g, "-")}.pdf`);
+
+                    // Ocultar el recibo después de guardar
+                    document.getElementById('recibo').style.display = 'none';
+                }).catch(error => {
+                    console.error("Error al generar el PDF:", error);
+                    alert("Hubo un error al generar el PDF.");
+                });
+            };
+
+            if (imagenRecibo.complete) {
+                imagenRecibo.onload();
+            }
+        }
+    </script>
+
+</body>
+</html>
